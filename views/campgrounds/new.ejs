@@ -1,18 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>New Campground</title>
-    </head>
-    <body>
-        <h1>Make a new campground</h1>
+<%- layout('layouts/boilerplate') %>
+<div class="row">
+    <h1 class="text-center">Make a new campground</h1>
+    <div class="col-6 offset-3">
         <form action="/campgrounds" method="POST">
-            <label for="title">title</label>
-            <input type="text" id="title" name="campground[title]" />
-            <label for="location">location</label>
-            <input type="text" id="location" name="campground[location]" />
-            <button>Make new Campground</button>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" id="title" name="campground[title]" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" name="campground[location]" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label">Image Url</label>
+                <input type="text" id="image" name="campground[image]" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="price-label">$</span>
+                    <input type="text" id="price" name="campground[price]" class="form-control" placeholder="0.00" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea type="text" id="description" name="campground[description]" class="form-control" rows="3"></textarea>
+            </div>
+            <button class="btn btn-success mb-5">Make new Campground</button>
         </form>
-    </body>
-</html>
+    </div>
+</div>
