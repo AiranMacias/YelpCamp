@@ -2,9 +2,11 @@ const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
 const port = 8080;
+const catchAsync = require("./utils/catchAsync");
 const Campground = require("./models/campground");
 const methodOverride = require("method-override");
 const engine = require("ejs-mate");
+const ExpressErrors = require("./utils/ExpressErrors");
 
 mongoose.connect("mongodb://localhost:27017/yelp-camp");
 
@@ -38,36 +40,61 @@ app.get("/campgrounds/new", (req, res) => {
 });
 
 //post it on the database
-app.post("/campgrounds", async (req, res) => {
-    const campground = new Campground(req.body.campground);
-    await campground.save();
-    res.redirect(`/campgrounds/${campground._id}`);
-});
+app.post(
+    "/campgrounds",
+    catchAsync(async (req, res, next) => {
+        const campground = new Campground(req.body.campground);
+        await campground.save();
+        res.redirect(`/campgrounds/${campground._id}`);
+    })
+);
 
 //render the edit for
-app.get("/campgrounds/:id/edit", async (req, res) => {
-    const campground = await Campground.findById(req.params.id);
-    res.render("campgrounds/edit", { campground });
-});
+app.get(
+    "/campgrounds/:id/edit",
+    catchAsync(async (req, res) => {
+        const campground = await Campground.findById(req.params.id);
+        res.render("campgrounds/edit", { campground });
+    })
+);
 
 //update the objext
-app.put("/campgrounds/:id", async (req, res) => {
-    const { id } = req.params;
-    const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
-    res.redirect(`${campground._id}`);
-});
+app.put(
+    "/campgrounds/:id",
+    catchAsync(async (req, res) => {
+        const { id } = req.params;
+        const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground });
+        res.redirect(`${campground._id}`);
+    })
+);
 
 //delete the object
-app.delete("/campgrounds/:id", async (req, res) => {
-    const { id } = req.params;
-    const campgroundDelete = await Campground.findByIdAndDelete(id);
-    res.redirect("/campgrounds");
+app.delete(
+    "/campgrounds/:id",
+    catchAsync(async (req, res) => {
+        const { id } = req.params;
+        const campgroundDelete = await Campground.findByIdAndDelete(id);
+        res.redirect("/campgrounds");
+    })
+);
+
+app.get(
+    "/campgrounds/:id",
+    catchAsync(async (req, res) => {
+        const { id } = req.params;
+        const campground = await Campground.findById(id);
+        res.render("campgrounds/show", { campground });
+    })
+);
+
+app.all("*", (err, req, res, next) => {
+    next(new ExpressErrors("Page Not Found"), 404);
 });
-app.get("/campgrounds/:id", async (req, res) => {
-    const { id } = req.params;
-    const campground = await Campground.findById(id);
-    res.render("campgrounds/show", { campground });
+
+app.use((err, req, res, next) => {
+    res.render("error");
 });
+
 app.listen(port, () => {
     console.log(`Serving on port ${port}`);
     console.log(`mongoose version ${mongoose.version}`);
