@@ -5,7 +5,14 @@
         <form action="/campgrounds/<%= campground._id %>?_method=PUT" method="POST" class="needs-validation" novalidate>
             <div class="mb-3">
                 <label for="title" class="form-label">Title</label>
-                <input type="text" id="title" name="campground[title]" class="form-control" value="<%= campground.title %>" required />
+                <input
+                    type="text"
+                    id="title"
+                    name="campground[title]"
+                    class="form-control"
+                    value="<%= campground.title %>"
+                    required
+                />
             </div>
             <div class="mb-3">
                 <label for="location" class="form-label">Location</label>
@@ -33,6 +40,7 @@
                         class="form-control"
                         placeholder="0.00"
                         value="<%= campground.price %>"
+                        step="0.1"
                         required
                     />
                 </div>
