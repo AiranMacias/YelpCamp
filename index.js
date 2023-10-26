@@ -3,12 +3,13 @@ const path = require("path");
 const mongoose = require("mongoose");
 const port = 8080;
 const catchAsync = require("./utils/catchAsync");
-const Campground = require("./models/campground");
 const methodOverride = require("method-override");
 const engine = require("ejs-mate");
 const ExpressErrors = require("./utils/ExpressErrors");
 const Joi = require("joi");
-const { campgroundSchema } = require("./schemas.js");
+const { campgroundSchema, reviewSchema } = require("./schemas.js");
+const Review = require("./models/review.js");
+const Campground = require("./models/campground");
 
 mongoose.connect("mongodb://localhost:27017/yelp-camp");
 
@@ -27,8 +28,20 @@ app.engine("ejs", engine);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+//backend validation of campgroundmaking
 const validateCampground = (req, res, next) => {
     const { error } = campgroundSchema.validate(req.body);
+    if (error) {
+        const msg = error.details.map((el) => el.message).join(",");
+        throw new ExpressErrors(msg, 400);
+    } else {
+        next();
+    }
+};
+
+//backend validation of reviews
+const validateReviews = (req, res, next) => {
+    const { error } = reviewSchema.validate(req.body);
     if (error) {
         const msg = error.details.map((el) => el.message).join(",");
         throw new ExpressErrors(msg, 400);
@@ -82,7 +95,7 @@ app.put(
     })
 );
 
-//delete the object
+//route for deleting the campground
 app.delete(
     "/campgrounds/:id",
     catchAsync(async (req, res) => {
@@ -92,11 +105,25 @@ app.delete(
     })
 );
 
+// adding reviews
+app.post(
+    "/campgrounds/:id/reviews",
+    validateReviews,
+    catchAsync(async (req, res) => {
+        const campground = await Campground.findById(req.params.id);
+        const review = new Review(req.body.review);
+        campground.reviews.push(review);
+        await review.save();
+        await campground.save();
+        res.redirect(`/campgrounds/${campground._id}`);
+    })
+);
+
 app.get(
     "/campgrounds/:id",
     catchAsync(async (req, res) => {
         const { id } = req.params;
-        const campground = await Campground.findById(id);
+        const campground = await Campground.findById(id).populate("reviews");
         res.render("campgrounds/show", { campground });
     })
 );
@@ -109,6 +136,7 @@ app.use((err, req, res, next) => {
     const { statusCode = 500 } = err;
     if (!err.message) err.message = "Something went wrong";
     res.status(statusCode).render("error", { err });
+    console.log(err.message);
 });
 
 app.listen(port, () => {
