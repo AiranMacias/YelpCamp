@@ -11,8 +11,10 @@ const { campgroundSchema, reviewSchema } = require("./schemas.js");
 const Review = require("./models/review.js");
 const Campground = require("./models/campground");
 
+//connects to mogodb
 mongoose.connect("mongodb://localhost:27017/yelp-camp");
 
+//logs successfull connection and logs error if occurs
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "console error:"));
 db.once("open", () => {
@@ -119,6 +121,17 @@ app.post(
     })
 );
 
+//deleting reviews// In Express.js, req.params is an object that contains route parameters. //the order of the router id determines the req.params
+app.delete(
+    "/campgrounds/:id/reviews/:reviewId",
+    catchAsync(async (req, res) => {
+        const { id, reviewId } = req.params;
+        await Campground.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+        await Review.findByIdAndDelete(reviewId);
+        res.redirect(`/campgrounds/${id}`);
+    })
+);
+
 app.get(
     "/campgrounds/:id",
     catchAsync(async (req, res) => {
@@ -128,8 +141,9 @@ app.get(
     })
 );
 
+//catchall for errors
 app.all("*", (req, res, next) => {
-    next(new ExpressErrors("Page Not Found"), 404);
+    next(new ExpressErrors("Page Not Found", 404));
 });
 
 app.use((err, req, res, next) => {
